@@ -23,7 +23,7 @@ INITIAL_SYSTEM_MESSAGE = {"role": "system", "content": rfile("01.system_trainnin
 INITIAL_ASSISTANT_MESSAGE = {"role": "assistant", "content": rfile("02.assistant.txt")}
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [INITIAL_SYSTEM_MESSAGE, INITIAL_ASSISTANT_MESSAGE]
+    st.session_state.messages = ["", INITIAL_ASSISTANT_MESSAGE]
 
 
 
