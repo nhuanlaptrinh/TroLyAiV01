@@ -86,24 +86,51 @@ def display_output(output):
 
 
 def main():
-    # CSS cho styling chat
-    st.markdown("""
-    <style>
-    .user {
+    # # CSS cho styling chat
+    # st.markdown("""
+    # <style>
+    # .user {
         
-        padding: 10px;
-        border-radius: 10px;
-        margin: 5px 0;
-        text-align: right;
-    }
-    .assistant {
+    #     padding: 10px;
+    #     border-radius: 10px;
+    #     margin: 5px 0;
+    #     text-align: right;
+    # }
+    # .assistant {
         
-        padding: 10px;
-        border-radius: 10px;
-        margin: 5px 0;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    #     padding: 10px;
+    #     border-radius: 10px;
+    #     margin: 5px 0;
+    # }
+    # </style>
+    # """, unsafe_allow_html=True)
+
+    # CSS để căn chỉnh trợ lý bên trái, người hỏi bên phải, và thêm icon trợ lý
+    st.markdown(
+        """
+        <style>
+            .assistant {
+                padding: 10px;
+                border-radius: 10px;
+                max-width: 75%;
+                background: none; /* Màu trong suốt */
+                text-align: left;
+            }
+            .user {
+                padding: 10px;
+                border-radius: 10px;
+                max-width: 75%;
+                background: none; /* Màu trong suốt */
+                text-align: right;
+                margin-left: auto;
+            }
+            .assistant::before { content: "🤖 "; font-weight: bold; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+
     
     # Hiển thị logo (nếu có)
     try:
