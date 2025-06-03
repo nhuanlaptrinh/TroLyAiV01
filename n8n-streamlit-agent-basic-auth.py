@@ -27,9 +27,6 @@ if "messages" not in st.session_state:
 
 
 
-
-
-
 def generate_session_id():
     return str(uuid.uuid4())
 
