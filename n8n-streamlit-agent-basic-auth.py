@@ -86,7 +86,7 @@ def display_output(output):
 
 
 def main():
-    st.set_page_config(page_title="Trợ lý AI", page_icon="🤖", layout="wide")
+    st.set_page_config(page_title="Trợ lý AI", page_icon="🤖", layout="centered")
     st.markdown(
         """
         <style>
