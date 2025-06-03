@@ -30,7 +30,7 @@ def send_message_to_llm(session_id, message):
         "chatInput": message
     }
     try:
-        response = requests.post(WEBHOOK_URL, json=payload, headers=headers, timeout=10)
+        response = requests.post(WEBHOOK_URL, json=payload, headers=headers)
         response.raise_for_status()
         response_data = response.json()
         print("Full response:", response_data)  # In ra toàn bộ dữ liệu trả về
