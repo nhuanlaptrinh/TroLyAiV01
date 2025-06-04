@@ -43,7 +43,7 @@ def send_message_to_llm(session_id, message):
         response.raise_for_status()
         response_data = response.json()
         print("Full response:", response_data)  # In ra toàn bộ dữ liệu trả về
-        content = response_data.get("content", "No output received")
+        content = response_data.get("content") or response_data.get("output")
         image_url = response_data.get('url', None)
         return content, image_url  # Return both content and image URL
     except requests.exceptions.RequestException as e:
