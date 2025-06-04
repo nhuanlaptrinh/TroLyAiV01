@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import uuid
 import re
+
 # Hàm đọc nội dung từ file văn bản
 def rfile(name_file):
     try:
@@ -13,18 +14,6 @@ def rfile(name_file):
 # Constants
 BEARER_TOKEN = st.secrets.get("BEARER_TOKEN")
 WEBHOOK_URL = st.secrets.get("WEBHOOK_URL")
-
-
-
-
-# # Khởi tạo tin nhắn "system" và "assistant"
-# INITIAL_SYSTEM_MESSAGE = {"role": "system", "content": rfile("01.system_trainning.txt")}
-# INITIAL_ASSISTANT_MESSAGE = {"role": "assistant", "content": rfile("02.assistant.txt")}
-
-# if "messages" not in st.session_state:
-#     st.session_state.messages = [INITIAL_SYSTEM_MESSAGE, INITIAL_ASSISTANT_MESSAGE]
-
-
 
 def generate_session_id():
     return str(uuid.uuid4())
@@ -59,22 +48,19 @@ def extract_text(output):
     text_only = re.sub(r'!\[.*?\]\(.*?\)', '', output)
     return text_only
 
-def display_output(text, image_url):
-    """Hiển thị văn bản và hình ảnh từ output"""
-    # Trích xuất văn bản và hình ảnh
-    print("Extracted image URL:", image_url)  # In ra URL hình ảnh đã trích xuất    
+def display_message_with_image(text, image_url):
+    """Hiển thị tin nhắn với văn bản và hình ảnh"""
     if image_url:
         st.markdown(
             f"""
             <a href="{image_url}" target="_blank">
-                <img src="{image_url}" alt="Biểu đồ SBUX" style="width: 100%; height: auto;">
+                <img src="{image_url}" alt="Biểu đồ" style="width: 100%; height: auto; margin-bottom: 10px;">
             </a>
             """,
             unsafe_allow_html=True
         )
-
     
-    # Hiển thị văn bản phân tích
+    # Hiển thị văn bản
     st.markdown(text, unsafe_allow_html=True)
 
 def main():
@@ -86,22 +72,26 @@ def main():
                 padding: 10px;
                 border-radius: 10px;
                 max-width: 75%;
-                background: none; /* Màu trong suốt */
+                background: none;
                 text-align: left;
+                margin-bottom: 10px;
             }
             .user {
                 padding: 10px;
                 border-radius: 10px;
                 max-width: 75%;
-                background: none; /* Màu trong suốt */
+                background: none;
                 text-align: right;
                 margin-left: auto;
+                margin-bottom: 10px;
             }
             .assistant::before { content: "🤖 "; font-weight: bold; }
+            .user::before { content: "👤 "; font-weight: bold; }
         </style>
         """,
         unsafe_allow_html=True
     )
+    
     # Hiển thị logo (nếu có)
     try:
         col1, col2, col3 = st.columns([3, 2, 3])
@@ -115,9 +105,8 @@ def main():
         with open("00.xinchao.txt", "r", encoding="utf-8") as file:
             title_content = file.read()
     except Exception as e:
-        title_content = "Lỗi đọc tiêu đề"
+        title_content = "Trợ lý AI"
 
-    print("title_content:", title_content)
     st.markdown(
         f"""<h1 style="text-align: center; font-size: 24px;">{title_content}</h1>""",
         unsafe_allow_html=True
@@ -133,21 +122,64 @@ def main():
     for message in st.session_state.messages:
         if message["role"] == "assistant":
             st.markdown(f'<div class="assistant">{message["content"]}</div>', unsafe_allow_html=True)
+            # Hiển thị hình ảnh nếu có
+            if "image_url" in message and message["image_url"]:
+                st.markdown(
+                    f"""
+                    <a href="{message['image_url']}" target="_blank">
+                        <img src="{message['image_url']}" alt="Biểu đồ" style="width: 100%; height: auto; margin-bottom: 10px;">
+                    </a>
+                    """,
+                    unsafe_allow_html=True
+                )
         elif message["role"] == "user":
             st.markdown(f'<div class="user">{message["content"]}</div>', unsafe_allow_html=True)
 
     # Ô nhập liệu cho người dùng
     if prompt := st.chat_input("Nhập nội dung cần trao đổi ở đây nhé?"):
+        # Thêm tin nhắn người dùng vào lịch sử
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Hiển thị tin nhắn người dùng ngay lập tức
+        st.markdown(f'<div class="user">{prompt}</div>', unsafe_allow_html=True)
+        
         # Gửi yêu cầu đến LLM và nhận phản hồi
         with st.spinner("Đang chờ phản hồi từ AI..."):
             llm_response, image_url = send_message_to_llm(st.session_state.session_id, prompt)
-            print("LLM response:", llm_response)
     
-        # Kiểm tra nếu phản hồi không phải lỗi và hiển thị phân tích kỹ thuật và hình ảnh (nếu có)
+        # Kiểm tra nếu phản hồi không phải lỗi
         if isinstance(llm_response, str) and "Error" in llm_response:
             st.error(llm_response)
+            # Thêm tin nhắn lỗi vào lịch sử
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": llm_response,
+                "image_url": None
+            })
         else:
-            display_output(llm_response, image_url)
+            # Hiển thị phản hồi từ AI
+            st.markdown(f'<div class="assistant">{llm_response}</div>', unsafe_allow_html=True)
+            
+            # Hiển thị hình ảnh nếu có
+            if image_url:
+                st.markdown(
+                    f"""
+                    <a href="{image_url}" target="_blank">
+                        <img src="{image_url}" alt="Biểu đồ" style="width: 100%; height: auto; margin-bottom: 10px;">
+                    </a>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            # Thêm phản hồi AI vào lịch sử
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": llm_response,
+                "image_url": image_url
+            })
+        
+        # Rerun để cập nhật giao diện
+        st.rerun()
 
 if __name__ == "__main__":
     main()
