@@ -10,7 +10,6 @@ def rfile(name_file):
     except FileNotFoundError:
             st.error(f"File {name_file} không tồn tại.")
 
-
 # Constants
 BEARER_TOKEN = st.secrets.get("BEARER_TOKEN")
 WEBHOOK_URL = st.secrets.get("WEBHOOK_URL")
@@ -44,18 +43,11 @@ def send_message_to_llm(session_id, message):
         response.raise_for_status()
         response_data = response.json()
         print("Full response:", response_data)  # In ra toàn bộ dữ liệu trả về
-        return response_data[0].get("output", "No output received")  # Trả về "output"
+        content = response_data.get("content", "No output received")
+        image_url = response_data.get('url', None)
+        return content, image_url  # Return both content and image URL
     except requests.exceptions.RequestException as e:
-        return f"Error: Failed to connect to the LLM - {str(e)}"
-
-def extract_image_url(output):
-    """Trích xuất URL hình ảnh từ chuỗi output sử dụng regex."""
-    url_pattern = r'!\[.*?\]\((.*?)\)'  # Regex để tìm URL hình ảnh trong markdown (định dạng: ![alt](url))
-    match = re.search(url_pattern, output)
-    if match:
-        return match.group(1)  # Trả về URL hình ảnh tìm được
-    else:
-        return None  # Nếu không tìm thấy URL hình ảnh
+        return f"Error: Failed to connect to the LLM - {str(e)}", None
 
 def extract_text(output):
     """Trích xuất văn bản từ chuỗi output (loại bỏ hình ảnh)"""
@@ -63,12 +55,10 @@ def extract_text(output):
     text_only = re.sub(r'!\[.*?\]\(.*?\)', '', output)
     return text_only
 
-def display_output(output):
+def display_output(text, image_url):
     """Hiển thị văn bản và hình ảnh từ output"""
     # Trích xuất văn bản và hình ảnh
-    text = extract_text(output)
-    image_url = extract_image_url(output)
-    # Nếu tìm thấy URL hình ảnh, hiển thị hình ảnh và cho phép bấm vào
+    print("Extracted image URL:", image_url)  # In ra URL hình ảnh đã trích xuất    
     if image_url:
         st.markdown(
             f"""
@@ -78,12 +68,10 @@ def display_output(output):
             """,
             unsafe_allow_html=True
         )
-   
+
+    
     # Hiển thị văn bản phân tích
     st.markdown(text, unsafe_allow_html=True)
-    
-    
-
 
 def main():
     st.set_page_config(page_title="Trợ lý AI", page_icon="🤖", layout="centered")
@@ -110,7 +98,6 @@ def main():
         """,
         unsafe_allow_html=True
     )
-    
     # Hiển thị logo (nếu có)
     try:
         col1, col2, col3 = st.columns([3, 2, 3])
@@ -124,8 +111,9 @@ def main():
         with open("00.xinchao.txt", "r", encoding="utf-8") as file:
             title_content = file.read()
     except Exception as e:
-        title_content = "Trợ lý AI"
+        title_content = "Lỗi đọc tiêu đề"
 
+    print("title_content:", title_content)
     st.markdown(
         f"""<h1 style="text-align: center; font-size: 24px;">{title_content}</h1>""",
         unsafe_allow_html=True
@@ -139,31 +127,23 @@ def main():
 
     # Hiển thị lịch sử tin nhắn
     for message in st.session_state.messages:
-        if message["role"] == "user":
+        if message["role"] == "assistant":
+            st.markdown(f'<div class="assistant">{message["content"]}</div>', unsafe_allow_html=True)
+        elif message["role"] == "user":
             st.markdown(f'<div class="user">{message["content"]}</div>', unsafe_allow_html=True)
-        elif message["role"] == "assistant":
-            display_output(message["content"])
 
     # Ô nhập liệu cho người dùng
     if prompt := st.chat_input("Nhập nội dung cần trao đổi ở đây nhé?"):
-        # Lưu tin nhắn của user vào session state
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Hiển thị tin nhắn user vừa gửi
-        st.markdown(f'<div class="user">{prompt}</div>', unsafe_allow_html=True)
-
         # Gửi yêu cầu đến LLM và nhận phản hồi
         with st.spinner("Đang chờ phản hồi từ AI..."):
-            llm_response = send_message_to_llm(st.session_state.session_id, prompt)
-
-        # Lưu phản hồi của AI vào session state
-        st.session_state.messages.append({"role": "assistant", "content": llm_response})
-        
-        # Hiển thị phản hồi của AI
-        display_output(llm_response)
-
-        # Rerun để cập nhật giao diện
-        st.rerun()
+            llm_response, image_url = send_message_to_llm(st.session_state.session_id, prompt)
+            print("LLM response:", llm_response)
+    
+        # Kiểm tra nếu phản hồi không phải lỗi và hiển thị phân tích kỹ thuật và hình ảnh (nếu có)
+        if isinstance(llm_response, str) and "Error" in llm_response:
+            st.error(llm_response)
+        else:
+            display_output(llm_response, image_url)
 
 if __name__ == "__main__":
     main()
