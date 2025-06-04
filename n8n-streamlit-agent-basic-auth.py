@@ -11,8 +11,8 @@ def rfile(name_file):
             st.error(f"File {name_file} không tồn tại.")
 
 # Constants
-BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTk2M2UzMy1kNGQ0LTQ5NjgtYjBkNi0wODQ3YjZiZGNmYTYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzQ4MDY3ODE3LCJleHAiOjE3NTA2Mjk2MDB9.GV_y7e_g8k6oqfXZO-Sjm7RA7_Gz25TsJW8lxhZob5M"
-WEBHOOK_URL = "https://n8n.srv819221.hstgr.cloud/webhook-test/trolyaicanhanhoa"
+BEARER_TOKEN = st.secrets.get("BEARER_TOKEN")
+WEBHOOK_URL = st.secrets.get("WEBHOOK_URL")
 
 
 
