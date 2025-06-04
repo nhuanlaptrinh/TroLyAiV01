@@ -68,13 +68,36 @@ def display_output(text, image_url):
             """,
             unsafe_allow_html=True
         )
-    else:
-        st.write("Không tìm thấy hình ảnh.")
+
     
     # Hiển thị văn bản phân tích
     st.markdown(text, unsafe_allow_html=True)
 
 def main():
+    st.set_page_config(page_title="Trợ lý AI", page_icon="🤖", layout="centered")
+    st.markdown(
+        """
+        <style>
+            .assistant {
+                padding: 10px;
+                border-radius: 10px;
+                max-width: 75%;
+                background: none; /* Màu trong suốt */
+                text-align: left;
+            }
+            .user {
+                padding: 10px;
+                border-radius: 10px;
+                max-width: 75%;
+                background: none; /* Màu trong suốt */
+                text-align: right;
+                margin-left: auto;
+            }
+            .assistant::before { content: "🤖 "; font-weight: bold; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     # Hiển thị logo (nếu có)
     try:
         col1, col2, col3 = st.columns([3, 2, 3])
