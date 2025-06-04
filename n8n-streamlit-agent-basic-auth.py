@@ -42,10 +42,14 @@ def send_message_to_llm(session_id, message):
         response = requests.post(WEBHOOK_URL, json=payload, headers=headers)
         response.raise_for_status()
         response_data = response.json()
-        print("Full response:", response_data)  # In ra toàn bộ dữ liệu trả về
-        content = response_data.get("content") or response_data.get("output")
-        image_url = response_data.get('url', None)
-        return content, image_url  # Return both content and image URL
+        try:
+            content = response_data.get("content") or response_data.get("output")
+            image_url = response_data.get('url', None)
+            return content, image_url  # Return both content and image URL
+        except:
+            content = response_data[0].get("content") or response_data[0].get("output")
+            image_url = response_data[0].get('url', None)
+            return content, image_url  # Return both content and image URL
     except requests.exceptions.RequestException as e:
         return f"Error: Failed to connect to the LLM - {str(e)}", None
 
