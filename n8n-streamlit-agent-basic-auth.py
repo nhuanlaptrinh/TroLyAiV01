@@ -86,7 +86,7 @@ def main():
                 margin-bottom: 10px;
             }
             .assistant::before { content: "🤖 "; font-weight: bold; }
-            .user::before { content: "👤 "; font-weight: bold; }
+            .user::before { content: " "; font-weight: bold; }
         </style>
         """,
         unsafe_allow_html=True
