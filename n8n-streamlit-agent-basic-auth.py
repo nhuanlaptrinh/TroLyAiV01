@@ -11,8 +11,8 @@ def rfile(name_file):
             st.error(f"File {name_file} không tồn tại.")
 
 # Constants
-BEARER_TOKEN = st.secrets.get("BEARER_TOKEN")
-WEBHOOK_URL = st.secrets.get("WEBHOOK_URL")
+BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTk2M2UzMy1kNGQ0LTQ5NjgtYjBkNi0wODQ3YjZiZGNmYTYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzQ4MDY3ODE3LCJleHAiOjE3NTA2Mjk2MDB9.GV_y7e_g8k6oqfXZO-Sjm7RA7_Gz25TsJW8lxhZob5M"
+WEBHOOK_URL = "https://n8n.srv819221.hstgr.cloud/webhook-test/trolyaicanhanhoa"
 
 
 
@@ -43,7 +43,7 @@ def send_message_to_llm(session_id, message):
         response.raise_for_status()
         response_data = response.json()
         print("Full response:", response_data)  # In ra toàn bộ dữ liệu trả về
-        content = response_data.get("content", "No output received")
+        content = response_data.get("content") or response_data.get("output")
         image_url = response_data.get('url', None)
         return content, image_url  # Return both content and image URL
     except requests.exceptions.RequestException as e:
