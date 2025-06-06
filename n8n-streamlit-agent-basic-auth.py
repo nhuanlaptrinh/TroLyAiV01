@@ -14,9 +14,6 @@ def rfile(name_file):
 BEARER_TOKEN = st.secrets.get("BEARER_TOKEN")
 WEBHOOK_URL = st.secrets.get("WEBHOOK_URL")
 
-
-
-
 # # Khởi tạo tin nhắn "system" và "assistant"
 # INITIAL_SYSTEM_MESSAGE = {"role": "system", "content": rfile("01.system_trainning.txt")}
 # INITIAL_ASSISTANT_MESSAGE = {"role": "assistant", "content": rfile("02.assistant.txt")}
@@ -40,38 +37,38 @@ def send_message_to_llm(session_id, message):
     }
     try:
         response = requests.post(WEBHOOK_URL, json=payload, headers=headers)
+        print("Request payload:", payload)  # In ra payload gửi đi
         response.raise_for_status()
         response_data = response.json()
-        print("Full response:", response_data)  # In ra toàn bộ dữ liệu trả về
-        content = response_data.get("content") or response_data.get("output")
-        image_url = response_data.get('url', None)
-        return content, image_url  # Return both content and image URL
+        print("Full response:", response_data) 
+        
+        contract = response_data[0].get('contract', "No contract received")
+        urlWord = response_data[0].get('urlWord', "No URL received")
+        
+        return [{"json": {"contract": contract, "urlWord": urlWord}}]
+    
     except requests.exceptions.RequestException as e:
-        return f"Error: Failed to connect to the LLM - {str(e)}", None
+        return [{"json": {"contract": f"Error: Failed to connect to the LLM - {str(e)}", "urlWord": ""}}]
 
-def extract_text(output):
-    """Trích xuất văn bản từ chuỗi output (loại bỏ hình ảnh)"""
-    # Loại bỏ tất cả các phần chứa hình ảnh
-    text_only = re.sub(r'!\[.*?\]\(.*?\)', '', output)
-    return text_only
-
-def display_output(text, image_url):
-    """Hiển thị văn bản và hình ảnh từ output"""
-    # Trích xuất văn bản và hình ảnh
-    print("Extracted image URL:", image_url)  # In ra URL hình ảnh đã trích xuất    
-    if image_url:
+def display_output(output):
+    """Hiển thị nội dung hợp đồng và URL file Word"""
+    # Lấy contract và urlWord từ output
+    contract = output.get('json', {}).get('contract', "No contract received")
+    urlWord = output.get('json', {}).get('urlWord', None)
+    
+    # Hiển thị nội dung hợp đồng
+    st.markdown(contract, unsafe_allow_html=True)
+    
+    # Hiển thị URL file Word nếu có
+    if urlWord and urlWord != "No URL received":
         st.markdown(
             f"""
-            <a href="{image_url}" target="_blank">
-                <img src="{image_url}" alt="Biểu đồ SBUX" style="width: 100%; height: auto;">
+            <a href="{urlWord}" target="_blank" style="color: blue; text-decoration: underline;">
+                Xem file hợp đồng (Word)
             </a>
             """,
             unsafe_allow_html=True
         )
-
-    
-    # Hiển thị văn bản phân tích
-    st.markdown(text, unsafe_allow_html=True)
 
 def main():
     st.set_page_config(page_title="Trợ lý AI", page_icon="🤖", layout="centered")
@@ -136,14 +133,16 @@ def main():
     if prompt := st.chat_input("Nhập nội dung cần trao đổi ở đây nhé?"):
         # Gửi yêu cầu đến LLM và nhận phản hồi
         with st.spinner("Đang chờ phản hồi từ AI..."):
-            llm_response, image_url = send_message_to_llm(st.session_state.session_id, prompt)
-            print("LLM response:", llm_response)
-    
-        # Kiểm tra nếu phản hồi không phải lỗi và hiển thị phân tích kỹ thuật và hình ảnh (nếu có)
-        if isinstance(llm_response, str) and "Error" in llm_response:
-            st.error(llm_response)
-        else:
-            display_output(llm_response, image_url)
+            llm_response = send_message_to_llm(st.session_state.session_id, prompt)
+            print('llm_response: ',llm_response)
+        # Lưu phản hồi của AI vào session state
+        st.session_state.messages.append({"role": "assistant", "content": llm_response[0]})
+        
+        # Hiển thị phản hồi của AI
+        display_output(llm_response[0])
+
+        # R ۞ Rerun để cập nhật giao diện
+        st.rerun()
 
 if __name__ == "__main__":
     main()
